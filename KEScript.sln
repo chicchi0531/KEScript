@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEScript", "KEScript\KEScript.csproj", "{D0152B3E-05F4-4988-83DC-4DE05A240C4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompilerTest", "CompilerTest\CompilerTest.csproj", "{84746845-F01E-43B2-9D53-4597DBCE8B8B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEScriptSG", "KEScriptSG\KEScriptSG.csproj", "{A5BAF780-27DA-47E4-BD5E-493A8C42EA38}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D0152B3E-05F4-4988-83DC-4DE05A240C4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0152B3E-05F4-4988-83DC-4DE05A240C4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0152B3E-05F4-4988-83DC-4DE05A240C4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0152B3E-05F4-4988-83DC-4DE05A240C4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84746845-F01E-43B2-9D53-4597DBCE8B8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84746845-F01E-43B2-9D53-4597DBCE8B8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84746845-F01E-43B2-9D53-4597DBCE8B8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84746845-F01E-43B2-9D53-4597DBCE8B8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5BAF780-27DA-47E4-BD5E-493A8C42EA38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5BAF780-27DA-47E4-BD5E-493A8C42EA38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5BAF780-27DA-47E4-BD5E-493A8C42EA38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5BAF780-27DA-47E4-BD5E-493A8C42EA38}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="7deb55e7-9dce-4b88-9396-cdc856be4874" name="変更" comment="">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.idea.KESCompiler/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.idea.KEScript/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.idea.KEScript/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.idea.KEScript/.idea/indexLayout.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.idea.KEScript/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CompilerTest/CompilerTest.csproj" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CompilerTest/UnitTest1.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KESCompiler.sln.DotSettings.user" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript.sln" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript.sln.DotSettings.user" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/KEScript.csproj" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/KEScript.csproj.DotSettings" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Ast/Ast.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Ast/AstPrinter.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/CodeGenerator.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Compiler.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Console.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/DataTable.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Error.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Hir/Hir.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Lexer.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Parser.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/SemanticsAnalyzer.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Token.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Type.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Compiler/Unit.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Platform/WindowsStandalone/StandardConsole.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Runtime/AssemblyFile.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Runtime/ClassData.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Runtime/KVirtualMachine.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Runtime/KesVirtualMemory.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Runtime/Op.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Runtime/ProgramData.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScript/Source/Runtime/StackFrame.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScriptSG/.vs/KEventSourceGeneration/DesignTimeBuild/.dtbcache.v2" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScriptSG/.vs/KEventSourceGeneration/FileContentIndex/5b70fb82-5b69-4888-89d0-a50602a83cf3.vsidx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScriptSG/.vs/KEventSourceGeneration/FileContentIndex/644875a6-8e8e-4946-ba19-45cd252c0d88.vsidx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScriptSG/.vs/KEventSourceGeneration/FileContentIndex/acd99dad-952f-4944-9716-bbbd75dc8a12.vsidx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScriptSG/.vs/KEventSourceGeneration/v17/.futdcache.v2" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScriptSG/.vs/KEventSourceGeneration/v17/.suo" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScriptSG/.vs/ProjectEvaluation/keventsourcegeneration.metadata.v7.bin" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScriptSG/.vs/ProjectEvaluation/keventsourcegeneration.projects.v7.bin" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScriptSG/ErrorCodeGenerator.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/KEScriptSG/KEScriptSG.csproj" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/e6e91b96e8fe4be39bc74a03ce5dd4af20400/2d/ae1ccb93/ZLoggerExtensions.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../K2_Alice2_Unity/source/K2_Alice2/Packages/com.koromosoft.kevent/Runtime/Core/Compiler.cs" root0="SKIP_HIGHLIGHTING" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="2cU7NSdRjqGPQZmj6toMGoWUlyE" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "C:\\Users\\coi_m\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\DecompilerCache",
+      "C:\\Users\\coi_m\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\SourcesCache",
+      "C:\\Users\\coi_m\\AppData\\Local\\Symbols\\src"
+    ]
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="アプリケーションレベル" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="デフォルトタスク">
+      <changelist id="7deb55e7-9dce-4b88-9396-cdc856be4874" name="変更" comment="" />
+      <created>1708154264716</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1708154264716</updated>
+      <workItem from="1708154266136" duration="11781000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
