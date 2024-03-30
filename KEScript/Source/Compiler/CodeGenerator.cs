@@ -1,6 +1,5 @@
 using KESCompiler.Compiler.Hir;
 using KESCompiler.Runtime;
-using ValueType = KESCompiler.Runtime.ValueType;
 
 namespace KESCompiler.Compiler;
 
@@ -11,18 +10,11 @@ public class CodeGenerator(ILogger logger, ProgramNode root) : IHirWalker<object
         public CodePosition Position { get; } = pos;
     }
 
-    struct Variable(string name, string typename, int address, int size)
-    {
-        public string name = name;
-        public string typename = typename;
-        public int address = address;
-        public int size = size;
-    }
-
     List<Operation> _program = new();
     List<string> _stringBuffer = new();
     List<ClassData> _classTable = new();
     int _entryPointAddress = 0;
+    int _globalVariableSize = 0;
 
     public ProgramData Generate()
     {
@@ -36,7 +28,8 @@ public class CodeGenerator(ILogger logger, ProgramNode root) : IHirWalker<object
             EntryPoint = _entryPointAddress,
             Program = _program.ToArray(),
             StringBuffer = _stringBuffer.ToArray(),
-            ClassTable = _classTable.ToArray()
+            ClassTable = _classTable.ToArray(),
+            GlobalVariableSize = root.GlobalVariables.Length
         };
     }
         
@@ -111,18 +104,25 @@ public class CodeGenerator(ILogger logger, ProgramNode root) : IHirWalker<object
         
         decl.Body.Solve(this);
         
-        return new MethodData(pc, decl.LocalVariableTypeHandles.Length);
+        return new MethodData(pc, decl.LocalVariableTypes.Length);
     }
     public object? Visit(FieldDecl decl)
     {
-        var valueType = TypeHandleToValueType(decl.TypeHandle);
+        static Runtime.MemoryValueType KesTypeToMemoryValueType(KesType type)
+        {
+            if (type == KesType.typeOfInt) return Runtime.MemoryValueType.Int32;
+            if (type == KesType.typeOfFloat) return Runtime.MemoryValueType.Float32;
+            if (type == KesType.typeOfBool) return Runtime.MemoryValueType.Boolean;
+            return Runtime.MemoryValueType.Address;
+        }
+        
+        var valueType = KesTypeToMemoryValueType(decl.Type);
         return new FieldData(valueType);
     }
     public object? Visit(LocalVarDecl decl)
     {
         // 初期化子がある場合は、初期化コードを生成
         if (decl.Initializer is null) return null;
-        
         decl.Initializer.Solve(this);
         AddCode(EOpCode.StLoc, decl.Handle);
         return null;
@@ -232,25 +232,37 @@ public class CodeGenerator(ILogger logger, ProgramNode root) : IHirWalker<object
             AddCode(EOpCode.Dup); //rvalueを複製（exprの返り値のため）
             AddCode(EOpCode.StFld, m.Handle); //stfld
         }
-        else if(target is IdentifierNode i)
+        else if(target is VariableAccess i)
         {
             expr.RValue.Solve(this);
             AddCode(EOpCode.Dup); //rvalueを複製（exprの返り値のため）
-            i.Solve(this); //stloc or stglb
+            switch (i.Scope)
+            {
+                case EVarScope.Global: AddCode(EOpCode.StGlb, i.Handle); break;
+                case EVarScope.Local: AddCode(EOpCode.StLoc, i.Handle); break;
+                case EVarScope.FunctionArg: AddCode(EOpCode.StArg, i.Handle); break;
+                case EVarScope.ClassField: AddCode(EOpCode.StFld, i.Handle); break;
+            }
         }
         else
         {
-            throw new NotImplementedException();
+            //ここに来たら左辺が右辺値になっている。そのようなエラーはSymbolResolverで検出されるべきなので、ここには来ないよう設計する
+            throw new ArgumentException();
         }
         return null;
     }
     public object? Visit(ConvertExpr convertExpr)
     {
         convertExpr.Expr.Solve(this);
-        switch (TypeHandleToValueType(convertExpr.TypeHandle))
+        
+        var type = convertExpr.RetType;
+        if (type == KesType.typeOfInt)
         {
-            case ValueType.Int32: AddCode(EOpCode.ConvI4); break;
-            case ValueType.Float32: AddCode(EOpCode.ConvR4); break;
+            AddCode(EOpCode.ConvI4);
+        }
+        else if (type == KesType.typeOfFloat)
+        {
+            AddCode(EOpCode.ConvR4);
         }
         return null;
     }
@@ -350,30 +362,29 @@ public class CodeGenerator(ILogger logger, ProgramNode root) : IHirWalker<object
         AddCode(EOpCode.LdNull);
         return null;
     }
-    public object? Visit(IdentifierNode identifierNode) => throw new NotImplementedException();
-    public object? Visit(LoadLocalVariable expr)
+    public object? Visit(VariableAccess expr)
     {
-        AddCode(EOpCode.LdLoc, expr.Handle);
-        return null;
-    }
-    public object? Visit(LoadGlobalVariable expr)
-    {
-        AddCode(EOpCode.LdGlb, expr.Handle);
-        return null;
-    }
-    public object? Visit(StoreLocalVariable expr)
-    { 
-        AddCode(EOpCode.StLoc, expr.Handle);
-        return null;
-    }
-    public object? Visit(StoreGlobalVariable expr)
-    {
-        AddCode(EOpCode.StGlb, expr.Handle);
+        switch (expr.Scope)
+        {
+            case EVarScope.Global:
+                AddCode(EOpCode.LdGlb, expr.Handle); break;
+            case EVarScope.Local: 
+                AddCode(EOpCode.LdLoc, expr.Handle); break;
+            case EVarScope.FunctionArg: 
+                AddCode(EOpCode.LdArg, expr.Handle); break;
+            case EVarScope.ClassField:
+                AddCode(EOpCode.LdFld, expr.Handle); break;
+            default: throw new ArgumentException();
+        }
         return null;
     }
 
     public object? Visit(FunctionCallExpr expr)
     {
+        //第一引数（thisポインタ）を積む
+        //グローバル関数の場合は積まない
+        expr.Expr?.Solve(this);
+        
         //引数を積む（-1,-2,-3,...のようにアクセスするので逆順に積む）
         for(int i=expr.Args.Count-1; i>=0; i--)
         {
@@ -381,7 +392,7 @@ public class CodeGenerator(ILogger logger, ProgramNode root) : IHirWalker<object
         }
         
         //コール（bpをスタックに積み、pcを書き換える。ローカル変数分のスタック確保）
-        AddCode(EOpCode.Call, expr.Address);
+        AddCode(EOpCode.Call, expr.Handle);
         
         return null;
     }
@@ -393,7 +404,7 @@ public class CodeGenerator(ILogger logger, ProgramNode root) : IHirWalker<object
     }
     public object? Visit(ObjectCreationExpr expr)
     {
-        AddCode(EOpCode.NewObj, expr.TypeHandle);
+        AddCode(EOpCode.NewObj, expr.RetType.ElementTypeHandle);
         return null;
     }
 
@@ -429,12 +440,4 @@ public class CodeGenerator(ILogger logger, ProgramNode root) : IHirWalker<object
         _program.Add(new Operation(code, address));
         return _program.Count - 1;
     }
-    
-    static Runtime.ValueType TypeHandleToValueType(int handle) => handle switch
-    {
-        0 => Runtime.ValueType.Int32,
-        1 => Runtime.ValueType.Float32,
-        2 => Runtime.ValueType.Boolean,
-        _ => Runtime.ValueType.Address
-    };
 }

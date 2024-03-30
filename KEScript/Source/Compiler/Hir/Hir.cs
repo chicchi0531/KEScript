@@ -1,5 +1,3 @@
-using KESCompiler.Compiler.Ast;
-
 namespace KESCompiler.Compiler.Hir;
 
 public interface IHirWalker<out T>
@@ -30,11 +28,7 @@ public interface IHirWalker<out T>
     T Visit(BooleanLiteral booleanLiteral);
     T Visit(StringLiteral stringLiteral);
     T Visit(NullLiteral nullLiteral);
-    T Visit(IdentifierNode identifierNode);
-    T Visit(LoadLocalVariable loadLocalVariable);
-    T Visit(LoadGlobalVariable expr);
-    T Visit(StoreLocalVariable storeLocalVariable);
-    T Visit(StoreGlobalVariable storeGlobalVariable);
+    T Visit(VariableAccess variableAccess);
     T Visit(FunctionCallExpr expr);
     T Visit(MemberAccessExpr memberAccessExpr);
     T Visit(ObjectCreationExpr expr);
@@ -85,28 +79,29 @@ public class ClassDecl(Ast.ClassDecl ast, int superClassHandle, FunctionDecl[] m
     }
 }
 
-public class FunctionDecl(Ast.FunctionDecl ast, int retTypeHandle, int[] argTypeHandle, BlockStmt body, int[] localVariableTypeHandles)
+public class FunctionDecl(Ast.FunctionDecl ast, KesType retType, KesType[] argType, BlockStmt body, KesType[] localVariableTypes)
     : HirNode
 {
     public Ast.FunctionDecl Ast { get; } = ast;
-    public int ReturnTypeHandle { get; } = retTypeHandle;
-    public int[] ArgTypeHandles { get; } = argTypeHandle;
+    public KesType ReturnType { get; } = retType;
+    public KesType[] ArgType { get; } = argType;
     public BlockStmt Body { get; } = body;
-    public int[] LocalVariableTypeHandles { get; } = localVariableTypeHandles;
+    public KesType[] LocalVariableTypes { get; } = localVariableTypes;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class FieldDecl(Ast.VarDecl ast, int typeHandle) : HirNode
+public class FieldDecl(Ast.VarDecl ast, KesType type) : HirNode
 {
     public Ast.VarDecl Ast { get; } = ast;
-    public int TypeHandle { get; } = typeHandle;
+    public KesType Type { get; } = type;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class LocalVarDecl(Ast.VarDecl ast, int handle, Expr initializer) : HirNode
+public class LocalVarDecl(Ast.VarDecl ast, int handle, KesType type, Expr? initializer) : HirNode
 {
     public Ast.VarDecl Ast { get; } = ast;
     public int Handle { get; } = handle;
+    public KesType Type { get; } = type;
     public Expr? Initializer { get; } = initializer;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
@@ -125,25 +120,27 @@ public class BlockStmt(Ast.BlockStmt ast, Stmt[] stmts) : Stmt
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class ExprStmt(Ast.Expr ast, Expr expr) : Stmt
+public class ExprStmt(Ast.ExprStmt ast, Expr expr) : Stmt
 {
-    public Ast.Expr Ast { get; } = ast;
+    public Ast.ExprStmt Ast { get; } = ast;
     public Expr Expr { get; } = expr;
 
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class VarDeclStmt(Ast.VarDecl ast, LocalVarDecl localVarDecl) : Stmt
+public class VarDeclStmt(Ast.VarDeclStmt ast, LocalVarDecl localVarDecl) : Stmt
 {
-    public Ast.VarDecl Ast { get; } = ast;
+    public Ast.VarDeclStmt Ast { get; } = ast;
     public LocalVarDecl LocalVarDecl { get; } = localVarDecl;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class LoopStmt(Ast.Stmt ast, ConditionExpr condition, Stmt body) : Stmt
+public class LoopStmt(Ast.Stmt ast, Expr? init, ConditionExpr condition, Expr? update, Stmt body) : Stmt
 {
     public Ast.Stmt Ast { get; } = ast;
+    public Expr? Init { get; } = init;
     public ConditionExpr Condition { get; } = condition;
+    public Expr? Update { get; } = update;
     public Stmt Body { get; } = body;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
@@ -182,16 +179,19 @@ public class ContinueStmt(Ast.ContinueStmt ast) : Stmt
 //-------------------------
 // 式関連のAST
 //-------------------------
-public abstract class Expr : HirNode{}
+public abstract class Expr(KesType retType) : HirNode
+{
+    public KesType RetType { get; } = retType;
+}
 
-public class ConditionExpr(Ast.ConditionExpr ast, Expr expr) : Expr
+public class ConditionExpr(Ast.ConditionExpr ast, Expr expr) : Expr(expr.RetType)
 {
     public Ast.ConditionExpr Ast { get; } = ast;
     public Expr Expr { get; } = expr;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class AssignExpr(Ast.AssignExpr ast, Expr lValue, Expr rValue) : Expr
+public class AssignExpr(Ast.AssignExpr ast, Expr lValue, Expr rValue) : Expr(lValue.RetType)
 {
     public Ast.AssignExpr Ast { get; } = ast;
     public Expr LValue { get; } = lValue;
@@ -199,15 +199,13 @@ public class AssignExpr(Ast.AssignExpr ast, Expr lValue, Expr rValue) : Expr
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class ConvertExpr(Ast.ConvertExpr ast, Expr expr, int typeHandle) : Expr
+public class ConvertExpr(Expr expr, KesType type) : Expr(type)
 {
-    public Ast.ConvertExpr Ast { get; } = ast;
     public Expr Expr { get; } = expr;
-    public int TypeHandle { get; } = typeHandle;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class BinaryExpr(Ast.BinaryExpr ast, Expr left, Expr right) : Expr
+public class BinaryExpr(Ast.BinaryExpr ast, Expr left, Expr right, KesType type) : Expr(type)
 {
     public Ast.BinaryExpr Ast { get; } = ast;
     public Expr Left { get; } = left;
@@ -216,7 +214,7 @@ public class BinaryExpr(Ast.BinaryExpr ast, Expr left, Expr right) : Expr
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class LogicExpr(Ast.LogicExpr ast, Expr left, Expr right) : Expr
+public class LogicExpr(Ast.LogicExpr ast, Expr left, Expr right, KesType type) : Expr(type)
 {
     public Ast.LogicExpr Ast { get; } = ast;
     public Expr Left { get; } = left;
@@ -225,7 +223,7 @@ public class LogicExpr(Ast.LogicExpr ast, Expr left, Expr right) : Expr
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class UnaryExpr(Ast.UnaryExpr ast, Expr expr) : Expr
+public class UnaryExpr(Ast.UnaryExpr ast, Expr expr) : Expr(expr.RetType)
 {
     public Ast.UnaryExpr Ast { get; } = ast;
     public Expr Expr { get; } = expr;
@@ -233,7 +231,7 @@ public class UnaryExpr(Ast.UnaryExpr ast, Expr expr) : Expr
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
     
-public class PrimaryExpr(Ast.PrimaryExpr ast, Expr expr) : Expr
+public class PrimaryExpr(Ast.PrimaryExpr ast, Expr expr) : Expr(expr.RetType)
 {
     public Ast.PrimaryExpr Ast { get; } = ast;
     public Expr Expr { get; } = expr;
@@ -242,81 +240,64 @@ public class PrimaryExpr(Ast.PrimaryExpr ast, Expr expr) : Expr
 }
 
 // 終端記号　即値
-public class IntegerLiteral(Ast.IntegerLiteral ast) : Expr
+public class IntegerLiteral(Ast.IntegerLiteral ast) : Expr(KesType.typeOfInt)
 {
     public Ast.IntegerLiteral Ast { get; } = ast;
 
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
-public class FloatLiteral(Ast.FloatLiteral ast) : Expr
+public class FloatLiteral(Ast.FloatLiteral ast) : Expr(KesType.typeOfFloat)
 {
     public Ast.FloatLiteral Ast { get; } = ast;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
-public class BooleanLiteral(Ast.BooleanLiteral ast) : Expr
+public class BooleanLiteral(Ast.BooleanLiteral ast) : Expr(KesType.typeOfBool)
 {
     public Ast.BooleanLiteral Ast { get; } = ast;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
-public class StringLiteral(Ast.StringLiteral ast) : Expr
+public class StringLiteral(Ast.StringLiteral ast) : Expr(KesType.typeOfString)
 {
     public Ast.StringLiteral Ast { get; } = ast;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
-public class NullLiteral(Ast.NullLiteral ast) : Expr
+public class NullLiteral(Ast.NullLiteral ast) : Expr(KesType.typeOfNull)
 {
     public Ast.NullLiteral Ast { get; } = ast;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-// 識別子
-public class IdentifierNode(IdentifierName ast, int handle) : Expr
+// 変数アクセス
+public class VariableAccess(Ast.IdentifierName ast, int handle, KesType type, EVarScope scope) : Expr(type)
 {
-    public IdentifierName Ast { get; } = ast;
-    public int Handle { get; }
-    public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
-}
-public class LoadLocalVariable(IdentifierName ast, int handle) : IdentifierNode(ast, handle)
-{
-    public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
-}
-public class LoadGlobalVariable(IdentifierName ast, int handle) : IdentifierNode(ast, handle)
-{
-    public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
-}
-    
-public class StoreLocalVariable(IdentifierName ast, int handle) : IdentifierNode(ast, handle)
-{
-    public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
-}
-public class StoreGlobalVariable(IdentifierName ast, int handle) : IdentifierNode(ast, handle)
-{
-    public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
-}
-
-// 関数呼び出し
-public class FunctionCallExpr(Ast.FunctionCallExpr ast, Expr expr, List<Expr> args, int addr, int retTypeHandle) : Expr
-{
-    Ast.FunctionCallExpr Ast { get; } = ast;
-    public Expr Expr { get; } = expr;
-    public List<Expr> Args { get; } = args;
-    public int Address { get; } = addr;
-    public int ReturnTypeHandle { get; } = retTypeHandle;
-
-    public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
-}
-
-public class MemberAccessExpr(Ast.MemberAccessExpr ast, Expr expr, int handle) : Expr
-{
-    public Ast.MemberAccessExpr Ast { get; } = ast;
-    public Expr Expr { get; } = expr;
+    public Ast.IdentifierName Ast { get; } = ast;
+    public EVarScope Scope { get; } = scope;
     public int Handle { get; } = handle;
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }
 
-public class ObjectCreationExpr(Ast.ObjectCreationExpr ast, int typehandle) : Expr
+// 関数呼び出し
+public class FunctionCallExpr(Ast.FunctionCallExpr ast, Expr? expr, List<Expr> args, int addr, KesType retType) : Expr(retType)
+{
+    Ast.FunctionCallExpr Ast { get; } = ast;
+    public Expr? Expr { get; } = expr;
+    public List<Expr> Args { get; } = args;
+    public int Handle { get; } = addr;
+
+    public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
+}
+
+public class MemberAccessExpr(Ast.MemberAccessExpr ast, Expr expr, int handle, bool isMethod, KesType retType) : Expr(retType)
+{
+    public Ast.MemberAccessExpr Ast { get; } = ast;
+    public Expr Expr { get; } = expr;
+    public bool IsMethod { get; } = isMethod;
+    public int Handle { get; } = handle;
+    public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
+}
+
+public class ObjectCreationExpr(Ast.ObjectCreationExpr ast, KesType type) : Expr(type)
 {
     public Ast.ObjectCreationExpr Ast { get; } = ast;
-    public int TypeHandle { get; }
     public override T Solve<T>(IHirWalker<T> walker) => walker.Visit(this);
 }

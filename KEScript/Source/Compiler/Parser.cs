@@ -5,18 +5,18 @@ namespace KESCompiler.Compiler
     public class Parser
     {
         readonly ILogger _logger;
-        int _current;
-        Token[] _tokens;
+        readonly Token[] _tokens;
         int _localVariableIndex = 0;
+        int _currentPos = 0;
 
-        public Parser(ILogger logger)
+        public Parser(ILogger logger, Token[] tokens)
         {
             _logger = logger;
+            _tokens = tokens;
         }
 
-        public ProgramNode Parse(Token[] tokens)
+        public ProgramNode Parse()
         {
-            _tokens = tokens;
             return ParseProgram();
         }
 
@@ -51,12 +51,12 @@ namespace KESCompiler.Compiler
                     }
                     else if (TryMatch(ETokenType.Var))
                     {
-                        variables.Add(ParseVarDecl(false, variables.Count, VarDecl.EVarScope.ClassField, accessModifier));
+                        variables.Add(ParseVarDecl(false, variables.Count, EVarScope.ClassField, accessModifier));
                         Consume(ETokenType.Semicolon, ErrorCode.SemicolonExpected);
                     }
                     else if (TryMatch(ETokenType.Let))
                     {
-                        variables.Add(ParseVarDecl(true, variables.Count, VarDecl.EVarScope.ClassField, accessModifier));
+                        variables.Add(ParseVarDecl(true, variables.Count, EVarScope.ClassField, accessModifier));
                         Consume(ETokenType.Semicolon, ErrorCode.SemicolonExpected);
                     }
                     else
@@ -72,6 +72,13 @@ namespace KESCompiler.Compiler
 
                 if (Peek().Type == ETokenType.Eof) Advance();
             }
+            
+            //型辞書の作成
+            foreach (var c in classes)
+            {
+                
+            }
+            
             return new ProgramNode(new CodePosition(),
                 classes.ToArray(),
                 functions.ToArray(),
@@ -84,14 +91,14 @@ namespace KESCompiler.Compiler
         {
             // classキーワードは消費済みなので、それ以後のトークンを解析する
             // "class" <identifier>
-            var className = Consume(ETokenType.Identifier, ErrorCode.IdentifierExpected)?.Lexeme.ToString();
-
+            var className = Consume(ETokenType.Identifier, ErrorCode.IdentifierExpected)?.Lexeme.ToString() ?? "";
+            
             // 継承リストの解析
             // (':' <identifier> (',' <identifier>)* )?
-            string superClass = "";
+            Expr? superClass = null;
             if (TryMatch(ETokenType.Colon))
             {
-                superClass = Previous().Lexeme.ToString();
+                superClass = ParseTypeName();
             }
 
             // <class_block>
@@ -157,12 +164,12 @@ namespace KESCompiler.Compiler
             //      "let" <identifier> ':' <type> ';' ;
             if (TryMatch(ETokenType.Var))
             {
-                variables.Add(ParseVarDecl(false, variables.Count, VarDecl.EVarScope.ClassField, accessModifier));
+                variables.Add(ParseVarDecl(false, variables.Count, EVarScope.ClassField, accessModifier));
                 Consume(ETokenType.Semicolon, ErrorCode.SemicolonExpected);
             }
             else if (TryMatch(ETokenType.Let))
             {
-                variables.Add(ParseVarDecl(true, variables.Count, VarDecl.EVarScope.ClassField, accessModifier));
+                variables.Add(ParseVarDecl(true, variables.Count, EVarScope.ClassField, accessModifier));
                 Consume(ETokenType.Semicolon, ErrorCode.SemicolonExpected);
             }
             else if (TryMatch(ETokenType.Fun))
@@ -192,7 +199,7 @@ namespace KESCompiler.Compiler
             int argIndex = 1;//0がthisなので、1から始める
             while (Peek().Type == ETokenType.Identifier)
             {
-                argList.Add(ParseVarDecl(false, argIndex++, VarDecl.EVarScope.FunctionArg));
+                argList.Add(ParseVarDecl(false, argIndex++, EVarScope.FunctionArg));
                 if (!TryMatch(ETokenType.Comma)) break;
             }
             Consume(ETokenType.RightParen, ErrorCode.RightParenthesisExpected);
@@ -214,7 +221,7 @@ namespace KESCompiler.Compiler
         }
 
         // 変数定義の構文解析
-        VarDecl ParseVarDecl(bool isImmutable, int address, VarDecl.EVarScope scope, EAccessModifier accessModifier = EAccessModifier.Private)
+        VarDecl ParseVarDecl(bool isImmutable, int address, EVarScope scope, EAccessModifier accessModifier = EAccessModifier.Private)
         {
             // varキーワードは消費済みなので、それ以後のトークンを解析する
             // ("var" | "let") <identifier> ':' <type> ';'
@@ -252,7 +259,7 @@ namespace KESCompiler.Compiler
             while (TryMatch(ETokenType.Dot))
             {
                 typename = Consume(ETokenType.Identifier, ErrorCode.TypeExpected)?.Lexeme.ToString();
-                result = new QualifiedName(result, new IdentifierName(typename, Peek().Position), pos);
+                result = new ModuleName(result, new IdentifierName(typename, Peek().Position), pos);
             }
             return result;
         }
@@ -353,7 +360,7 @@ namespace KESCompiler.Compiler
                 initValue,
                 isConstance,
                 _localVariableIndex++,
-                VarDecl.EVarScope.Local,
+                EVarScope.Local,
                 pos);
             return new VarDeclStmt(varDecl, pos);
         }
@@ -494,8 +501,17 @@ namespace KESCompiler.Compiler
                 var right = ParseAssign(); //右結合にするため、再帰的にAssignを呼び出す
                 if (right == null)
                 {
-                    throw new CompileErrorException(ErrorCode.InvalidExprTerm, Peek().Source);
+                    throw new CompileErrorException(ErrorCode.InvalidExprTerm);
                 }
+                
+                //leftが左辺値であるかどうかチェックする
+                //終端ノードが、変数、配列要素、メンバーアクセスのいずれかであれば、左辺値である
+                var isLeftValue = left is MemberAccessExpr or IdentifierName;
+                if (!isLeftValue)
+                {
+                    throw new CompileErrorException(ErrorCode.LeftOfAssignMustBeLeftValue);
+                }
+                
                 left = new AssignExpr(left, right, left.Position);
             }
 
@@ -517,7 +533,7 @@ namespace KESCompiler.Compiler
                 var right = ParseLogicAnd();
                 if (right == null)
                 {
-                    throw new CompileErrorException(ErrorCode.InvalidExprTerm, Peek().Source);
+                    throw new CompileErrorException(ErrorCode.InvalidExprTerm);
                 }
                 left = new LogicExpr(left, op, right, left.Position);
             }
@@ -540,7 +556,7 @@ namespace KESCompiler.Compiler
                 var right = ParseEquality();
                 if (right == null)
                 {
-                    throw new CompileErrorException(ErrorCode.InvalidExprTerm, Peek().Source);
+                    throw new CompileErrorException(ErrorCode.InvalidExprTerm);
                 }
                 left = new LogicExpr(left, op, right, left.Position);
             }
@@ -562,7 +578,7 @@ namespace KESCompiler.Compiler
                 var right = ParseTerm();
                 if (right == null)
                 {
-                    throw new CompileErrorException(ErrorCode.InvalidExprTerm, Peek().Source);
+                    throw new CompileErrorException(ErrorCode.InvalidExprTerm);
                 }
                 left = new BinaryExpr(left, op, right, left.Position);
             }
@@ -581,7 +597,7 @@ namespace KESCompiler.Compiler
                 var right = ParseFactor();
                 if (right == null)
                 {
-                    throw new CompileErrorException(ErrorCode.InvalidExprTerm, Peek().Source);
+                    throw new CompileErrorException(ErrorCode.InvalidExprTerm);
                 }
                 left = new BinaryExpr(left, op, right, left.Position);
             }
@@ -598,7 +614,7 @@ namespace KESCompiler.Compiler
                 var right = ParseUnary();
                 if (right == null)
                 {
-                    throw new CompileErrorException(ErrorCode.InvalidExprTerm, Peek().Source);
+                    throw new CompileErrorException(ErrorCode.InvalidExprTerm);
                 }
                 left = new BinaryExpr(left, op, right, left.Position);
             }
@@ -617,7 +633,7 @@ namespace KESCompiler.Compiler
                 var left = ParseUnary();
                 if (left == null)
                 {
-                    throw new CompileErrorException(ErrorCode.InvalidExprTerm, Peek().Source);
+                    throw new CompileErrorException(ErrorCode.InvalidExprTerm);
                 }
                 return new UnaryExpr(left, op, left.Position);
             }
@@ -680,10 +696,24 @@ namespace KESCompiler.Compiler
             Consume(ETokenType.New, ErrorCode.NewKeywordExpected);
             
             var typename = ParseTypeName();
-            Consume(ETokenType.LeftParen, ErrorCode.LeftParenthesisExpected);
-            var args = ParseArgList();
+
+            //通常new
+            if (TryMatch(ETokenType.LeftParen))
+            {
+                var args = ParseArgList();
+                return new ObjectCreationExpr(typename, args, pos);
+            }
             
-            return new ObjectCreationExpr(typename, args, pos);
+            // 配列new
+            if (TryMatch(ETokenType.LeftBracket))
+            {
+                // todo:配列の初期化ノードを作成する
+                // var arg = ParseExpr();
+                // return new ArrayCreationExpr(typename, arg, pos);
+                throw new NotImplementedException();
+            }
+            
+            throw new CompileErrorException(ErrorCode.LeftParenthesisExpected);
         }
 
         List<Expr> ParseArgList()
@@ -713,13 +743,13 @@ namespace KESCompiler.Compiler
             return argList;
         }
 
-        Expr ParseMemberAccess(Expr preview)
+        Expr ParseMemberAccess(Expr? preview)
         {
             var t = Consume(ETokenType.Identifier, ErrorCode.IdentifierExpected);
             var name = t.Lexeme.ToString();
             
             // メンバーアクセスの場合
-            Expr expr = null;
+            Expr? expr = null;
             if (preview is not null)
             {
                 expr = new MemberAccessExpr(name, preview, t.Position);
@@ -757,32 +787,32 @@ namespace KESCompiler.Compiler
 
         bool ReadAllProgram()
         {
-            return _tokens.Length == _current;
+            return _tokens.Length == _currentPos;
         }
 
         Token Advance()
         {
-            return _tokens[_current++];
+            return _tokens[_currentPos++];
         }
 
         Token Previous()
         {
-            return _tokens[_current - 1];
+            return _tokens[_currentPos - 1];
         }
 
         Token Rewind()
         {
-            return _tokens[_current--];
+            return _tokens[_currentPos--];
         }
 
         Token Peek()
         {
-            return _tokens[_current];
+            return _tokens[_currentPos];
         }
 
         Token PeekNext()
         {
-            return _tokens[_current + 1];
+            return _tokens[_currentPos + 1];
         }
 
         bool TryMatch(ETokenType t)

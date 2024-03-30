@@ -51,7 +51,7 @@ public struct KesErrorType
 [KesError(117,"BreakKeywordExpected", "構文解析エラー。breakキーワードが必要です。")]
 [KesError(118,"ContinueKeywordExpected", "構文解析エラー。continueキーワードが必要です。")]
 [KesError(119,"InvalidExprTerm", "構文解析エラー。不正な{0}が検出されました。")]
-[KesError(120,"LeftHandSizeMustBeVariable", "構文解析エラー。代入の左辺は変数である必要があります。")]
+[KesError(120,"LeftOfAssignMustBeLeftValue", "構文解析エラー。代入の左辺は左辺値である必要があります。")]
 [KesError(121, "CommaExpected", "構文解析エラー。,が必要です。")]
 [KesError(122,"NewKeywordExpected", "構文解析エラー。newキーワードが必要です。")]
 // semantic error
@@ -66,8 +66,13 @@ public struct KesErrorType
 [KesError(131, "FunctionNotFound", "意味解析エラー。関数{0}が見つかりません。")]
 [KesError(132, "FieldNotFound", "意味解析エラー。クラス{0}にフィールド{1}が見つかりません。")]
 [KesError(133, "MethodNotFound", "意味解析エラー。クラス{0}にメソッド{1}が見つかりません。")]
-[KesError(134, "CannotAssignToImmutableVariable", "意味解析エラー。変数{0}は定数です。")]
+[KesError(134, "CannotAssignToImmutableVariable", "意味解析エラー。左辺は定数です。")]
 [KesError(135, "CannotCreateObjectAsPrimitiveType", "意味解析エラー。値型はnewできません。")]
+[KesError(136, "CircularInheritance", "意味解析エラー。クラス{0}は循環継承しています。")]
+[KesError(137,"InvalidMemberAccessFormat","意味解析エラー。メンバーアクセス式の中に、変数、関数以外のものが含まれています。")]
+[KesError(138, "MemberNotFound", "意味解析エラー。クラス{0}にメンバ{1}が見つかりません。")]
+[KesError(139, "FieldUsedAsMethod", "意味解析エラー。フィールド変数が関数として呼ばれました。")]
+[KesError(140, "InvalidTypeOfOperatorBinary", "意味解析エラー。{0}演算子は{1}型と{2}型には適用できません。")]
 [KesError(200, "CannotFindEntryPoint","意味解析エラー。エントリーポイントが見つかりません。グローバル空間にmain関数を定義してください。")]
 // codegen error
 [KesError(201, "InvalidVarScope", "コード生成エラー。変数{0}のスコープが不正です。")]

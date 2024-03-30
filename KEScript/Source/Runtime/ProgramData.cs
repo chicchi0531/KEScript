@@ -12,6 +12,7 @@ namespace KESCompiler.Runtime
         public Operation[] Program { get; init; }
         public string[] StringBuffer { get; init; }
         public ClassData[] ClassTable { get; init; }
+        public int GlobalVariableSize { get; init; }
         
         public static ProgramData Deserialize(byte[] data)
         {
@@ -85,6 +86,9 @@ namespace KESCompiler.Runtime
                 classTable.Add(ClassData.Deserialize(classBufSlice.ToArray()));
                 sliceOffset += 4 + classBufSize;
             }
+            
+            // Global variable size
+            var globalVariableSize = BitConverter.ToInt32(classBufBytes.Slice(sliceOffset, 4));
 
             return new ProgramData()
             {
@@ -94,7 +98,8 @@ namespace KESCompiler.Runtime
                 EntryPoint = entryPoint,
                 Program = program.ToArray(),
                 StringBuffer = stringBuffer.ToArray(),
-                ClassTable = classTable.ToArray()
+                ClassTable = classTable.ToArray(),
+                GlobalVariableSize = globalVariableSize
             };
         }
 
@@ -120,6 +125,7 @@ namespace KESCompiler.Runtime
             {
                 stringBuilder.AppendLine($"  {cls}");
             }
+            stringBuilder.AppendLine($"GlobalVariableSize: {GlobalVariableSize}");
             return stringBuilder.ToString();
         }
     }

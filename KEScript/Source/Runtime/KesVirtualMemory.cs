@@ -31,9 +31,9 @@ namespace KESCompiler.Runtime
 
     public readonly struct MemoryChunkHeader
     {
-        public readonly ValueType[] layout;
+        public readonly MemoryValueType[] layout;
         public int Size => layout.Length;
-        public MemoryChunkHeader(ValueType[] layout)
+        public MemoryChunkHeader(MemoryValueType[] layout)
         {
             this.layout = layout;
         }
@@ -57,17 +57,17 @@ namespace KESCompiler.Runtime
             {
                 switch (header.layout[i])
                 {
-                    case ValueType.Int32: 
+                    case MemoryValueType.Int32: 
                         _memory[i] = new MemoryValue(0);
                         break;
-                    case ValueType.Float32: 
+                    case MemoryValueType.Float32: 
                         _memory[i] = new MemoryValue(0f);
                         break;
-                    case ValueType.Boolean: 
+                    case MemoryValueType.Boolean: 
                         _memory[i] = new MemoryValue(false);
                         break;
-                    case ValueType.Address:
-                    case ValueType.Null: 
+                    case MemoryValueType.Address:
+                    case MemoryValueType.Null: 
                         _memory[i] = new MemoryValue(new Address(0,0));
                         break;
                 }
@@ -113,7 +113,7 @@ namespace KESCompiler.Runtime
         {
         }
         
-        public Address Malloc(ValueType[] layout)
+        public Address Malloc(MemoryValueType[] layout)
         {
             var header = new MemoryChunkHeader(layout);
             var chunk = new MemoryChunk(header);
@@ -151,7 +151,7 @@ namespace KESCompiler.Runtime
             //現在のフレームの変数スタックを走査
             foreach (var v in frame.GetVariableStack())
             {
-                if (v.type is ValueType.Address)
+                if (v.type is MemoryValueType.Address)
                 {
                     Mark(v.address);
                 }
@@ -173,7 +173,7 @@ namespace KESCompiler.Runtime
             // チャンクがアドレスを持っていればそのアドレスを再帰的にマーク
             foreach (var v in chunk.Memory)
             {
-                if (v.type == ValueType.Address)
+                if (v.type == MemoryValueType.Address)
                 {
                     Mark(v.address);
                 }

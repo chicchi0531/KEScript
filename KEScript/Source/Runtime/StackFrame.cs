@@ -3,7 +3,7 @@ using System.Text;
 
 namespace KESCompiler.Runtime;
 
-public enum ValueType : byte
+public enum MemoryValueType : byte
 {
     Boolean,
     Int32,
@@ -54,7 +54,7 @@ public class StackFrame
 public readonly struct MemoryValue
 {
     [FieldOffset(0)]
-    public readonly ValueType type;
+    public readonly MemoryValueType type;
 
     //最大長は64bit(8byte)とする
     [FieldOffset(1)] public readonly byte bValue;
@@ -66,7 +66,7 @@ public readonly struct MemoryValue
 
     public MemoryValue(int value)
     {
-        type = ValueType.Int32;
+        type = MemoryValueType.Int32;
         bValue = default;
         fValue = default;
         boolValue = default;
@@ -78,7 +78,7 @@ public readonly struct MemoryValue
         
     public MemoryValue(float value)
     {
-        type = ValueType.Float32;
+        type = MemoryValueType.Float32;
         bValue = default;
         iValue = default;
         boolValue = default;
@@ -89,7 +89,7 @@ public readonly struct MemoryValue
     }
     public MemoryValue(bool value)
     {
-        type = ValueType.Boolean;
+        type = MemoryValueType.Boolean;
         bValue = default;
         fValue = default;
         iValue = default;
@@ -100,7 +100,7 @@ public readonly struct MemoryValue
     }
     public MemoryValue(Address value)
     {
-        type = ValueType.Address;
+        type = MemoryValueType.Address;
         bValue = default;
         fValue = default;
         iValue = default;
@@ -124,10 +124,10 @@ public readonly struct MemoryValue
         // 型に応じた値を表示
         switch (type)
         {
-            case ValueType.Int32: str.Append($"[int:{iValue}]"); break;
-            case ValueType.Float32: str.Append($"[float:{fValue}]"); break;
-            case ValueType.Boolean: str.Append($"[bool:{boolValue}]"); break;
-            case ValueType.Address: str.Append($"[addr:{address.head}.{address.offset}]"); break;
+            case MemoryValueType.Int32: str.Append($"[int:{iValue}]"); break;
+            case MemoryValueType.Float32: str.Append($"[float:{fValue}]"); break;
+            case MemoryValueType.Boolean: str.Append($"[bool:{boolValue}]"); break;
+            case MemoryValueType.Address: str.Append($"[addr:{address.head}.{address.offset}]"); break;
         }
         return str.ToString();
     }

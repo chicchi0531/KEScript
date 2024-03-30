@@ -162,7 +162,7 @@ public class AstPrinter : IAstWalker<string>
     public string Visit(ConditionExpr expr) => throw new NotImplementedException();
     public string Visit(AssignExpr expr)
     {
-        return $"{expr.Tag.Name}<{expr.Tag.TypeName}> = {expr.Value.Solve(this)}<{expr.Value.TypeName}>";
+        return $"{expr.LValue.Name}<{expr.LValue.TypeName}> = {expr.RValue.Solve(this)}<{expr.RValue.TypeName}>";
     }
     public string Visit(BinaryExpr expr)
     {
@@ -203,11 +203,11 @@ public class AstPrinter : IAstWalker<string>
             
         return stringBuilder.ToString();
     }
-    public string Visit(QualifiedName qualifiedName) => throw new NotImplementedException();
+    public string Visit(ModuleName moduleName) => throw new NotImplementedException();
     public string Visit(FunctionCallExpr functionCallExpr)
     {
         var f = functionCallExpr;
-        return $"{f.Name}({string.Join(", ", f.Args.Select(a => a.Solve(this)))})<{functionCallExpr.TypeName}>";
+        return $"{f.Expr}({string.Join(", ", f.Args.Select(a => a.Solve(this)))})<{functionCallExpr.TypeName}>";
     }
     public string Visit(MemberAccessExpr memberAccessExpr)
     {

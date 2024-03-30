@@ -69,13 +69,13 @@ public class ClassData(int superClass, MethodData[] methods, FieldData[] fields)
     }
 }
 
-public class FieldData(ValueType type)
+public class FieldData(MemoryValueType type)
 {
-    public ValueType Type { get; } = type;
+    public MemoryValueType Type { get; } = type;
         
     public static FieldData Deserialize(byte data)
     {
-        return new FieldData((ValueType)data);
+        return new FieldData((MemoryValueType)data);
     }
 }
     

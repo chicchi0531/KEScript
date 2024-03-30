@@ -34,7 +34,7 @@ public interface IAstWalker<out T>
     T Visit(NullLiteral nullLiteral);
     T Visit(PredefinedTypeName predefinedTypeName);
     T Visit(IdentifierName identifierName);
-    T Visit(QualifiedName qualifiedName);
+    T Visit(ModuleName moduleName);
     T Visit(FunctionCallExpr functionCallExpr);
     T Visit(ObjectCreationExpr objectCreationExpr);
 }
@@ -60,22 +60,13 @@ public class ProgramNode
         return walker.Visit(this);
     }
 
-    public ClassDecl? FindClass(string name)
-    {
-        return Classes.FirstOrDefault(x => x.Name == name);
-    }
-    public FunctionDecl? FindFunction(string name)
-    {
-        return GlobalFunctions.FirstOrDefault(x => x.Name == name);
-    }
-    public VarDecl? FindVariable(string name)
-    {
-        return GlobalVariables.FirstOrDefault(x => x.Name == name);
-    }
-        
-    public int GetClassIndexOf(string name) => Array.FindIndex(Classes, x => x.Name == name);
-    public int GetFunctionIndexOf(string name) => Array.FindIndex(GlobalFunctions, x => x.Name == name);
-    public int GetVariableIndexOf(string name) => Array.FindIndex(GlobalVariables, x => x.Name == name);
+     ClassDecl? FindClass(string name) => Classes.FirstOrDefault(x => x.Name == name);
+     FunctionDecl? FindFunction(string name) => GlobalFunctions.FirstOrDefault(x => x.Name == name);
+     VarDecl? FindVariable(string name) => GlobalVariables.FirstOrDefault(x => x.Name == name);
+
+     int GetClassHandle(string name) => Array.FindIndex(Classes, x => x.Name == name);
+     int GetFunctionHandle(string name) => Array.FindIndex(GlobalFunctions, x => x.Name == name);
+     int GetVariableAddress(string name) => Array.FindIndex(GlobalVariables, x => x.Name == name);
 }
 
 public enum EAccessModifier
@@ -92,7 +83,7 @@ public abstract class Decl(CodePosition position) : AstNode(position)
 
 public class ClassDecl : Decl
 {
-    public ClassDecl(string name, EAccessModifier accessModifier, string superClass, CodePosition position,
+    public ClassDecl(string name, EAccessModifier accessModifier, Expr? superClass, CodePosition position,
         FunctionDecl[] functions, VarDecl[] variables) : base(position)
     {
         Name = name;
@@ -103,7 +94,7 @@ public class ClassDecl : Decl
     }
 
     public string Name { get; }
-    public string SuperClass { get; }
+    public Expr? SuperClass { get; }
     public FunctionDecl[] Functions { get; }
     public VarDecl[] Variables { get; }
 
@@ -112,16 +103,16 @@ public class ClassDecl : Decl
         return walker.Visit(this);
     }
 
-    public FunctionDecl? FindMethod(string name)
+    FunctionDecl? FindMethod(string name)
     {
         return Functions.FirstOrDefault(x => x.Name == name);
     }
-    public VarDecl? FindField(string name)
+     VarDecl? FindField(string name)
     {
         return Variables.FirstOrDefault(x => x.Name == name);
     }
-    public int GetMethodIndexOf(string name) => Array.FindIndex(Functions, x => x.Name == name);
-    public int GetFieldIndexOf(string name) => Array.FindIndex(Variables, x => x.Name == name);
+     int GetMethodIndexOf(string name) => Array.FindIndex(Functions, x => x.Name == name);
+     int GetFieldIndexOf(string name) => Array.FindIndex(Variables, x => x.Name == name);
 }
 
 public class FunctionDecl : Decl
@@ -146,15 +137,7 @@ public class FunctionDecl : Decl
 }
 
 public class VarDecl : Decl
-{
-    public enum EVarScope
-    {
-        FunctionArg,
-        ClassField,
-        Local,
-        Global
-    }
-        
+{    
     public VarDecl(EAccessModifier accessModifier, Expr type, string name, Expr initValue, bool isImmutable,
         int address, EVarScope scope, CodePosition position) : base(position)
     {
@@ -168,7 +151,7 @@ public class VarDecl : Decl
     }
         
     public bool IsImmutable { get; }
-    public Expr Type { get; }
+    public Expr? Type { get; }
     public string Name { get; }
     public Expr InitValue { get; }
     public int Address { get; }
@@ -268,38 +251,32 @@ public class ContinueStmt(CodePosition position) : Stmt(position)
 //-------------------------
 public abstract class Expr(CodePosition position) : AstNode(position)
 {
-    public string TypeName { get; set; } = "";
+    public virtual bool Equals(Expr expr) => throw new NotImplementedException();
 }
 
 public class ConditionExpr(Expr expr, CodePosition position) : Expr(position)
 {
-
     public Expr Expr { get; } = expr;
     public override T Solve<T>(IAstWalker<T> walker) => walker.Visit(this);
 }
 
-public class AssignExpr(Expr tag, Expr value, CodePosition position) : Expr(position)
+public class AssignExpr(Expr lValue, Expr rValue, CodePosition position) : Expr(position)
 {
-    public Expr Tag { get; } = tag;
-    public Expr Value { get; set; } = value; //型変換でコンバートされる場合があるので、setアクセサを用意
+    public Expr LValue { get; } = lValue;
+    public Expr RValue { get; set; } = rValue; //型変換でコンバートされる場合があるので、setアクセサを用意
     public override T Solve<T>(IAstWalker<T> walker) => walker.Visit(this);
 }
 
-public class ConvertExpr : Expr
+public class ConvertExpr(Expr typename, Expr value, CodePosition position) : Expr(position)
 {
-    public ConvertExpr(string typename, Expr value, CodePosition position) : base(position)
-    {
-        TypeName = typename;
-        Value = value;
-    }
-    public Expr Value { get; }
+    public Expr TypeName { get; } = typename;
+    public Expr Value { get; } = value;
     public override T Solve<T>(IAstWalker<T> walker) => walker.Visit(this);
 }
 
 public class BinaryExpr(Expr left, Token op, Expr right, CodePosition position)
     : Expr(position)
 {
-
     public Expr Left { get; set; } = left; //型変換でコンバートされる場合があるので、setアクセサを用意
     public KesOperator Op { get; } = KesOperatorHelper.TokenToBinaryOperator(op);
     public Expr Right { get; set;  } = right; //型変換でコンバートされる場合があるので、setアクセサを用意
@@ -367,14 +344,20 @@ public class NullLiteral(CodePosition position) : Expr(position)
 public class IdentifierName(string name, CodePosition position) : Expr(position)
 {
     public string Name { get; } = name;
+    public override bool Equals(Expr expr) => Name == (expr as IdentifierName)?.Name;
     public override T Solve<T>(IAstWalker<T> walker) => walker.Visit(this);
 }
     
 // 終端記号　修飾名
-public class QualifiedName(Expr left, IdentifierName right, CodePosition position) : Expr(position)
+public class ModuleName(Expr left, IdentifierName right, CodePosition position) : Expr(position)
 {
     public Expr Left { get; } = left;
     public IdentifierName Right { get; } = right;
+    public override bool Equals(Expr expr)
+    {
+        if (expr is not ModuleName q) return false;
+        return Right.Equals(q.Right) && Left.Equals(q.Left);
+    }
     public override T Solve<T>(IAstWalker<T> walker) => walker.Visit(this);
 }
     
@@ -382,6 +365,12 @@ public class QualifiedName(Expr left, IdentifierName right, CodePosition positio
 public class PredefinedTypeName(Token t, CodePosition position) : Expr(position)
 {
     public Token Token { get; } = t;
+
+    public override bool Equals(Expr expr)
+    {
+        if(expr is not PredefinedTypeName p) return false;
+        return p.Token.Type == Token.Type;
+    }
 
     public override T Solve<T>(IAstWalker<T> walker) => walker.Visit(this);
 
@@ -392,26 +381,26 @@ public class PredefinedTypeName(Token t, CodePosition position) : Expr(position)
 }
 
 // 関数呼び出し
-public class FunctionCallExpr(Expr expression, List<Expr> args, CodePosition position) : Expr(position)
+public class FunctionCallExpr(Expr expr, List<Expr> args, CodePosition position) : Expr(position)
 {
 
-    public Expr Expression { get; } = expression;
+    public Expr Expr { get; } = expr;
     public List<Expr> Args { get; } = args;
 
     public override T Solve<T>(IAstWalker<T> walker) => walker.Visit(this);
 }
     
-public class MemberAccessExpr(string name, Expr expression, CodePosition position) : Expr(position)
+public class MemberAccessExpr(string name, Expr expr, CodePosition position) : Expr(position)
 {
     public string Name { get; } = name;
-    public Expr Expression { get;} = expression;
+    public Expr Expr { get;} = expr;
 
     public override T Solve<T>(IAstWalker<T> walker) => walker.Visit(this);
 }
 
 public class ObjectCreationExpr(Expr typeName, List<Expr> args, CodePosition position) : Expr(position)
 {
-    public Expr Expr { get; } = typeName;
+    public Expr TypeName { get; } = typeName;
     public List<Expr> Args { get; } = args;
 
     public override T Solve<T>(IAstWalker<T> walker) => walker.Visit(this);

@@ -41,8 +41,8 @@ public class Compiler(ILogger logger)
         }
             
         // ast path1 : シンボルの解決
-        var symbolResolver = new SymbolResolver(_logger);
-        ast.Solve(symbolResolver);
+        var symbolResolver = new SymbolResolver(_logger, ast);
+        var hir = symbolResolver.Resolve();
         if(_logger.ErrorCount > 0) return null;
         if ((option & (byte)ECompilerOption.PrintAst) > 0)
         {
@@ -52,8 +52,8 @@ public class Compiler(ILogger logger)
         // 型解決
             
         // ast path2 : 目的コード生成
-        var codeGenerator = new CodeGenerator(_logger);
-        var result = codeGenerator.Generate(ast);
+        var codeGenerator = new CodeGenerator(_logger, hir);
+        var result = codeGenerator.Generate();
         PrintOpCodes(result);
             
         return null;

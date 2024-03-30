@@ -227,10 +227,10 @@ namespace KESCompiler.Runtime
             var a = Pop();
             switch (a.type)
             {
-                case ValueType.Int32:
+                case MemoryValueType.Int32:
                     result = new MemoryValue(a.iValue + b.iValue);
                     break;
-                case ValueType.Float32:
+                case MemoryValueType.Float32:
                     result = new MemoryValue(a.fValue + b.fValue);
                     break;
                 default: throw new FormatException();
@@ -244,10 +244,10 @@ namespace KESCompiler.Runtime
             var a = Pop();
             switch (a.type)
             {
-                case ValueType.Int32:
+                case MemoryValueType.Int32:
                     result = new MemoryValue(a.iValue - b.iValue);
                     break;
-                case ValueType.Float32:
+                case MemoryValueType.Float32:
                     result = new MemoryValue(a.fValue - b.fValue);
                     break;
                 default: throw new FormatException();
@@ -261,10 +261,10 @@ namespace KESCompiler.Runtime
             var a = Pop();
             switch (a.type)
             {
-                case ValueType.Int32:
+                case MemoryValueType.Int32:
                     result = new MemoryValue(a.iValue * b.iValue);
                     break;
-                case ValueType.Float32:
+                case MemoryValueType.Float32:
                     result = new MemoryValue(a.fValue * b.fValue);
                     break;
                 default: throw new FormatException();
@@ -278,10 +278,10 @@ namespace KESCompiler.Runtime
             var a = Pop();
             switch (a.type)
             {
-                case ValueType.Int32:
+                case MemoryValueType.Int32:
                     result = new MemoryValue(a.iValue / b.iValue);
                     break;
-                case ValueType.Float32:
+                case MemoryValueType.Float32:
                     result = new MemoryValue(a.fValue / b.fValue);
                     break;
                 default: throw new FormatException();
@@ -295,10 +295,10 @@ namespace KESCompiler.Runtime
             var a = Pop();
             switch (a.type)
             {
-                case ValueType.Int32:
+                case MemoryValueType.Int32:
                     result = new MemoryValue(a.iValue % b.iValue);
                     break;
-                case ValueType.Float32:
+                case MemoryValueType.Float32:
                     result = new MemoryValue(a.fValue % b.fValue);
                     break;
                 default: throw new FormatException();
